@@ -1,0 +1,11 @@
+# виртуальное окружение
+.venv/
+venv/
+env/
+# кэш Python
+__pycache__/
+*.pyc
+# системные и редакторские файлы
+.DS_Store
+.vscode/
+.idea/
