@@ -12,3 +12,12 @@ __pycache__/
 # файлы, которые игра создаёт при запуске (ЛР 2)
 game.log
 records.csv
+
+# ЛР 3: Telegram-бот - секреты и данные пользователей не коммитим
+py_bot/.env
+.env
+py_bot/sessions/*
+!py_bot/sessions/.gitkeep
+py_bot/data/*
+!py_bot/data/.gitkeep
+*.log
