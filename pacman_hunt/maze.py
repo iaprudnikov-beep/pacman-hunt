@@ -8,8 +8,22 @@ from collections import deque
 
 from pacman_hunt.constants import COLS, DIRS, MAZE_STR, ROWS
 
-# Сетка лабиринта: MAZE[y][x] == 1 - стена, 0 - проход
+# Сетка лабиринта: MAZE[y][x] == 1 - стена, 0 - проход.
+# Сначала это лабиринт по умолчанию; при старте игры set_maze заменяет его
+# лабиринтом из файла уровня.
 MAZE = [[int(c) for c in row] for row in MAZE_STR]
+
+
+def set_maze(matrix):
+    """Подставляет лабиринт загруженного уровня.
+
+    Список MAZE меняется «на месте» (MAZE[:] = ...), а не создаётся заново:
+    другие модули импортировали именно этот объект и сразу видят изменения.
+
+    Args:
+        matrix: проверенная матрица ROWS x COLS из 0 и 1.
+    """
+    MAZE[:] = [list(row) for row in matrix]
 
 
 def is_free(x, y):

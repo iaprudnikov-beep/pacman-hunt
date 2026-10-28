@@ -7,6 +7,8 @@
       и которая от призрака дальше всего;
     * гистерезис: из бегства Пакман выходит, только когда призрак дальше
       FLEE_EXIT клеток, чтобы режимы не «мигали» на границе.
+Смена режима (аналог «перехода противника в состояние расследования»)
+записывается в лог.
 """
 
 import math
@@ -18,6 +20,7 @@ from pacman_hunt.constants import (
     PAC_FLEE, PAC_START, PAC_VIS_SPEED,
 )
 from pacman_hunt.effects import approach, glow_circle
+from pacman_hunt.logger import log_event
 from pacman_hunt.maze import bfs_map, bfs_path_first_step, first_step, is_free
 
 
@@ -30,15 +33,26 @@ class Pacman:
         direction: последнее направление движения (dx, dy) - для рта.
         mode: "chase" (ищет еду) или "flee" (убегает).
         timer: сколько секунд осталось до следующего шага.
+        delay: пауза между шагами (сек).
+        flee_dist: порог входа в бегство (клетки).
+        flee_exit: порог выхода из бегства (клетки).
     """
 
-    def __init__(self, start=PAC_START):
-        """Создаёт Пакмана в клетке start."""
+    def __init__(self, start=PAC_START, delay=PAC_DELAY,
+                 flee_dist=FLEE_DIST, flee_exit=FLEE_EXIT):
+        """Создаёт Пакмана в клетке start.
+
+        Настройки ИИ по умолчанию берутся из constants.py,
+        но игра передаёт сюда значения из файла уровня.
+        """
         self.pos = start
         self.vis = (float(start[0]), float(start[1]))
         self.direction = (1, 0)
         self.mode = "chase"
         self.timer = 0.0
+        self.delay = delay
+        self.flee_dist = flee_dist
+        self.flee_exit = flee_exit
 
     # ----- ИИ -----
     def ghost_distance(self, ghost_pos):
@@ -49,13 +63,18 @@ class Pacman:
     def update_mode(self, ghost_pos):
         """Переключает режим с гистерезисом.
 
-        Вход в бегство при d < FLEE_DIST, выход при d >= FLEE_EXIT.
+        Вход в бегство при d < flee_dist, выход при d >= flee_exit.
+        Каждое переключение записывается в лог.
         """
         d = self.ghost_distance(ghost_pos)
-        if self.mode == "chase" and d < FLEE_DIST:
+        if self.mode == "chase" and d < self.flee_dist:
             self.mode = "flee"
-        elif self.mode == "flee" and d >= FLEE_EXIT:
+            log_event(f"Пакман {self.pos} заметил призрака {ghost_pos} "
+                      f"(расстояние {d:.1f}) -> режим БЕГСТВО")
+        elif self.mode == "flee" and d >= self.flee_exit:
             self.mode = "chase"
+            log_event(f"Пакман {self.pos} оторвался от призрака "
+                      f"(расстояние {d:.1f}) -> режим ПОИСК ЕДЫ")
 
     def _flee_step(self, ghost_pos):
         """Выбирает следующую клетку в режиме бегства."""
@@ -111,14 +130,14 @@ class Pacman:
         return False
 
     def tick(self, dt, ghost_pos, food):
-        """Отсчитывает таймер и делает шаг раз в PAC_DELAY секунд.
+        """Отсчитывает таймер и делает шаг раз в self.delay секунд.
 
         Returns:
             True, если на этом кадре была съедена еда.
         """
         self.timer -= dt
         if self.timer <= 0:
-            self.timer = PAC_DELAY
+            self.timer = self.delay
             return self.step(ghost_pos, food)
         return False
 

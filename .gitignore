@@ -9,3 +9,6 @@ __pycache__/
 .DS_Store
 .vscode/
 .idea/
+# файлы, которые игра создаёт при запуске (ЛР 2)
+game.log
+records.csv
