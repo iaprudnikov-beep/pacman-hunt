@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Pac-Man Hunt — JS</title>
+<style>
+  body { margin: 0; background: #08061a; color: #f5f5ff; font-family: Arial, sans-serif;
+         display: flex; flex-direction: column; align-items: center; }
+  canvas { margin-top: 12px; border: 2px solid #3c8cff; }
+  #info { margin: 8px; font-size: 14px; opacity: .85; }
+  #log { width: 880px; height: 110px; overflow: auto; font: 12px monospace; background: #0c0a22;
+         padding: 6px; box-sizing: border-box; white-space: pre; }
+</style>
+</head>
+<body>
+<canvas id="c" width="880" height="640"></canvas>
+<div id="info">Стрелки / WASD — двигать призрака · Пробел — «Бу!» · R — заново</div>
+<div id="log"></div>
+<script type="module">
+// Здесь только ввод и рисование. Вся логика — в js/*.js (ядро)
+import { CELL, HUD_H, COLS, ROWS, STATE, RESULT } from './js/constants.js';
+import { GameField } from './js/gameField.js';
+import { Game } from './js/game.js';
+
+const ctx = document.getElementById('c').getContext('2d');
+const logBox = document.getElementById('log');
+const text = await fetch('/level.json').then((r) => r.text()).catch(() => '');
+const { field, error } = GameField.load(text);
+const game = new Game(field);
+if (error) game.log.add(0, 'warn', `Уровень не загружен: ${error}. Взят по умолчанию`);
+
+const KEYS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+  KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
+const held = new Set();     // зажатые клавиши-стрелки
+let repeatMs = 0;           // повтор шага при зажатой клавише (как GHOST_STEP_MS)
+addEventListener('keydown', (e) => {
+  if (KEYS[e.code]) {
+    e.preventDefault();
+    if (!held.has(e.code)) { game.moveGhost(...KEYS[e.code]); repeatMs = 170; }
+    held.add(e.code);
+  } else if (e.code === 'Space') { e.preventDefault(); game.boo(); }
+  else if (e.code === 'KeyR') { game.reset(); }
+});
+addEventListener('keyup', (e) => held.delete(e.code));
+
+const COLOR = { [STATE.CHASE]: '#ffe028', [STATE.FLEE]: '#ffaa28', [STATE.RETURN]: '#7dff6a' };
+const px = (c) => c * CELL + CELL / 2;
+const py = (c) => HUD_H + c * CELL + CELL / 2;
+
+function draw() {
+  ctx.fillStyle = '#0c0a22'; ctx.fillRect(0, 0, 880, 640);
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    if (field.maze[y][x] === 1) {
+      ctx.fillStyle = '#0e123c'; ctx.fillRect(x * CELL, HUD_H + y * CELL, CELL, CELL);
+      ctx.strokeStyle = '#3c8cff'; ctx.strokeRect(x * CELL + 2, HUD_H + y * CELL + 2, CELL - 4, CELL - 4);
+    }
+  }
+  ctx.fillStyle = '#ffd696';
+  for (const [x, y] of game.food.list()) { ctx.beginPath(); ctx.arc(px(x), py(y), 4, 0, 7); ctx.fill(); }
+  for (const e of game.effects) {   // волны «Бу!»
+    ctx.strokeStyle = `rgba(255,70,120,${e.alpha})`; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px(e.x), py(e.y), e.radius * CELL, 0, 7); ctx.stroke(); ctx.lineWidth = 1;
+  }
+  const p = game.pacman; const g = game.ghost;
+  const a = Math.atan2(p.direction[1], p.direction[0]);
+  const mouth = 0.1 + 0.6 * Math.abs(Math.sin(game.timeMs / 110));
+  ctx.fillStyle = COLOR[p.state];
+  ctx.beginPath(); ctx.moveTo(px(p.vis[0]), py(p.vis[1]));
+  ctx.arc(px(p.vis[0]), py(p.vis[1]), CELL / 2 - 4, a + mouth, a + 2 * Math.PI - mouth); ctx.fill();
+  ctx.fillStyle = '#ff4678';
+  ctx.beginPath(); ctx.arc(px(g.vis[0]), py(g.vis[1]) - 2, CELL / 2 - 4, Math.PI, 0);
+  ctx.lineTo(px(g.vis[0]) + CELL / 2 - 4, py(g.vis[1]) + CELL / 2 - 4);
+  ctx.lineTo(px(g.vis[0]) - CELL / 2 + 4, py(g.vis[1]) + CELL / 2 - 4); ctx.fill();
+  // HUD
+  const d = p.ghostDistance(g.pos);
+  ctx.fillStyle = '#f5f5ff'; ctx.font = '16px Arial';
+  ctx.fillText(`Еда: ${game.food.count}/${game.food.total}   Время: ${(game.timeMs / 1000).toFixed(1)} с   ` +
+    `Пакман: ${p.state}   d = ${d.toFixed(2)}   угроза = ${p.threatFrom(g.pos).toFixed(3)}   ` +
+    `«Бу!»: ${g.cooldownLeft(game.timeMs) ? (g.cooldownLeft(game.timeMs) / 1000).toFixed(1) + ' с' : 'готово'}`, 10, 26);
+  if (game.result !== RESULT.PLAY) {
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 0, 880, 640);
+    ctx.fillStyle = game.result === RESULT.WIN ? '#00e6ff' : '#ff506e'; ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(game.result === RESULT.WIN ? 'ПАКМАН ПОЙМАН!' : 'ПОРАЖЕНИЕ', 440, 320);
+    ctx.font = '20px Arial'; ctx.fillText('R — сыграть ещё', 440, 360); ctx.textAlign = 'left';
+  }
+  logBox.textContent = game.log.last(8).map((e) => `${(e.timeMs / 1000).toFixed(1)} с | ${e.type} | ${e.text}`).join('\n');
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(100, now - last); last = now;
+  if (held.size) {                      // зажатая клавиша — шаг раз в 170 мс
+    repeatMs -= dt;
+    if (repeatMs <= 0) { game.moveGhost(...KEYS[[...held].at(-1)]); repeatMs = 170; }
+  }
+  game.update(dt);                      // ввод уже обработан -> обновление -> проверка конца
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

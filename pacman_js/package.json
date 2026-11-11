@@ -1,0 +1,14 @@
+{
+  "name": "pacman_js",
+  "version": "1.0.0",
+  "description": "ЛР 4: ядро игры Pac-Man Hunt на JavaScript (ES6+), без зависимостей",
+  "type": "module",
+  "scripts": {
+    "test": "node selftest.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

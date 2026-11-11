@@ -92,6 +92,11 @@ pacman-hunt/
     ├── sessions/           # сессии (в git не попадают)
     ├── data/scores.csv     # загруженные через бота результаты (в git не попадает)
     └── tests/              # тесты без настоящего токена (unittest)
+└── pacman_js/              # ЛР 4: ядро игры на JavaScript (подробно — раздел «ЛР 4»)
+    ├── package.json        # "type": "module", npm test / npm start
+    ├── selftest.js         # самопроверка ядра в Node.js
+    ├── server.js, index.html  # запуск в браузере (canvas)
+    └── js/                 # классы ядра: один класс — один файл
 ```
 
 ## Установка и запуск (macOS)
@@ -447,6 +452,147 @@ python -m unittest discover -s tests -t .
 хорошего и битого файла, уведомления, права админа, изоляцию сессий,
 отмену, обработчик ошибок и запуск без токена. Отдельный тест сверяет,
 что порядок таблицы лидеров бота совпадает с `top_records()` игры.
+
+## ЛР 4: ядро игры на JavaScript (`pacman_js/`)
+
+Математика и логика игры перенесены с Python на JavaScript (ES6+). Ядро
+(`pacman_js/js/*.js`) не знает про браузер: оно работает в Node.js и
+проверяется самопроверкой `selftest.js`. `index.html` только рисует
+игру на `<canvas>` и читает клавиши.
+
+### Запуск
+
+Нужен Node.js 18+ (`node --version`). Внешних зависимостей нет, `npm install` не нужен.
+
+```bash
+cd pacman_js
+npm test     # самопроверка: node selftest.js — 51 проверка, все ✅
+npm start    # node server.js -> открыть http://localhost:8080
+```
+
+Порт можно поменять так: `PORT=3000 npm start`. Сервер нужен, потому что
+`<script type="module">` не работает при открытии файла через `file://`.
+Управление в браузере: стрелки или WASD двигают призрака, пробел — «Бу!», R — заново.
+
+### Структура
+
+```
+pacman_js/
+├── package.json         # "type": "module", скрипты test и start
+├── selftest.js          # самопроверка (console.log, ✅/❌)
+├── server.js            # HTTP-сервер без зависимостей (отдаёт и ../pacman_hunt/data/level.json)
+├── index.html           # canvas: рисование и клавиши (вся логика — в js/)
+├── tests/parity_cases.json  # эталонные ответы Python-кода для сравнения
+├── tools/make_parity.py     # генерирует parity_cases.json из настоящего pacman_hunt
+└── js/                  # ядро: один класс — один файл
+    ├── constants.js     # все параметры, STATE, пороги (выведены из формулы)
+    ├── rect.js          # Rect: center, move (копия), colliderect, collidepoint
+    ├── physics.js       # Physics: distance, threat, limitDistance, booLoudness, booLimit
+    ├── effect.js        # Effect: волна «Бу!» (рост, alpha, жизненный цикл)
+    ├── food.js          # Food: еда на поле
+    ├── levelError.js    # LevelError: ошибка файла уровня
+    ├── gameField.js     # GameField: лабиринт, стены, BFS, JSON + валидация
+    ├── ghost.js         # Ghost: движение со стенами, «Бу!» с кулдауном
+    ├── pacman.js        # Pacman: автомат CHASE/FLEE/RETURN, защита от застревания
+    ├── eventLog.js      # EventLog: «чёрный ящик» и статистика
+    └── game.js          # Game: ввод -> обновление -> проверка конца, игровые часы
+```
+
+Уровень берётся из **того же файла** `pacman_hunt/data/level.json`, что у Python,
+и проверяется **теми же правилами**, что `validate_level` (ключи maze/ghost/pacman,
+поле 22×15 из 0 и 1, старты — целые, внутри поля, не стены, разные и связаны
+проходом, delay/flee_dist/flee_exit — положительные числа, flee_exit ≥ flee_dist).
+Ошибка `JSON.parse` ловится в `try/catch` и превращается в `LevelError`;
+`GameField.load()` при любой `LevelError` берёт уровень по умолчанию.
+
+### Формулы
+
+| Что | Формула | Значения |
+|---|---|---|
+| Расстояние | `d = Math.hypot(x2 - x1, y2 - y1)` | в клетках |
+| Угроза от призрака | `threat(d) = THREAT_0 · e^(−THREAT_DECAY · d)` | `THREAT_0 = 1`, `THREAT_DECAY = 0.3` |
+| Порог входа в бегство | `ENTER = threat(FLEE_DIST) = e^(−1.5)` | ≈ 0.2231 |
+| Порог выхода | `EXIT = threat(FLEE_EXIT) = e^(−2.1)` | ≈ 0.1225 |
+| Обратная задача | `d = ln(THREAT_0 / порог) / THREAT_DECAY` | ENTER → 5, EXIT → 7 |
+| Громкость «Бу!» | `loud(d) = BOO_POWER_0 · modifier · e^(−BOO_DECAY · d)` | `BOO_DECAY = 0.35` |
+| Порог испуга | `loud(d) ≥ BOO_THRESHOLD` | 0.25 → граница ≈ 3.96 кл. (×1.5 → 5.12) |
+| Модификатор «Бу!» | `1 + 0.5 · съедено / всего` | от 1.0 до 1.5 |
+
+Пороги не подобраны на глаз: они **выведены** из формулы так, чтобы граничные
+расстояния были ровно 5 и 7 клеток, как `FLEE_DIST`/`FLEE_EXIT` в Python.
+Поэтому `threat(d) > ENTER` ⇔ `d < 5`, а `threat(d) ≤ EXIT` ⇔ `d ≥ 7`.
+Если удвоить `THREAT_DECAY`, угроза падает быстрее и граница сокращается вдвое (2.5 клетки).
+
+Волна «Бу!» долетает до `6 · modifier` клеток, но Пакман пугается (стоит 1.2 с),
+только если громкость на его расстоянии не ниже порога. «Волна дошла, но тихо» и
+«испугался» — разные события в журнале.
+
+### Таблица состояний Пакмана
+
+| Состояние | Что делает | Переход | Событие |
+|---|---|---|---|
+| `CHASE` | идёт к ближайшей еде (BFS), запоминает цель | → `FLEE` | `threat(d) > ENTER` (d < 5); цель сохраняется как точка возврата |
+| `FLEE` | бежит в клетку, куда успевает раньше призрака | → `RETURN` | `threat(d) ≤ EXIT` (d ≥ 7) и прерванная еда ещё есть |
+| `FLEE` | | → `CHASE` | `threat(d) ≤ EXIT`, а прерванной еды уже нет |
+| `RETURN` | идёт к той самой еде, к которой шёл до бегства | → `CHASE` | съел её или её больше нет |
+| `RETURN` | | → `FLEE` | `threat(d) > ENTER` — призрак опять рядом |
+
+**Защита от застревания.** В Python, если призрак стоит у последней еды, Пакман
+бесконечно ходит по кругу «подошёл → испугался → отошёл → подошёл».
+В JS Пакман считает, сколько раз начинал убегать за последние 30 шагов. Если 3 раза —
+это цикл: на 12 шагов он становится «смелым» (убегает, только если призрак ближе
+2 клеток, порог `threat(2)`). Самопроверка показывает: без защиты за 1000 с еда
+не доедена, с защитой — съедена за 57 с.
+
+**Кулдаун «Бу!»** — 4000 мс по игровым часам (`Game.timeMs`): повторное нажатие
+раньше возвращает `null`, поэтому эффекты не «спамятся».
+
+### Python → JavaScript
+
+| Python (ЛР 1–2) | JavaScript (ЛР 4) |
+|---|---|
+| `constants.py` | `js/constants.js` (`export const`) |
+| `pacman.mode = "chase"/"flee"` | `STATE = Object.freeze({CHASE, FLEE, RETURN})` |
+| `Pacman.update_mode` (сравнение `d`) | `Pacman.updateState` (сравнение `threat(d)` с порогами) |
+| `Pacman._flee_step`, `_chase_step` | `Pacman._fleeStep`, `_chaseStep` (+ `_returnStep`) |
+| `maze.bfs_map`, `first_step`, `bfs_path_first_step` | `GameField.bfsMap`, `firstStep`, `bfsPathFirstStep` |
+| `maze.is_free` | `GameField.isFree`, `cellAt`, `hitsWall` |
+| `pygame.Rect` | свой `Rect` (`move` возвращает копию) |
+| `Ghost.move` | `Ghost.move` (пробный `rect.move` + проверка стен) + `Ghost.boo` |
+| `Game.food` (множество) | `Food` (Map, ключ `"x,y"`) |
+| `storage.validate_level`, `LevelError`, `load_level` | `GameField.validate`, `LevelError`, `GameField.load` |
+| `json.load` + `except JSONDecodeError` | `JSON.parse` в `try/catch` |
+| `logger.log_event` → `game.log` | `EventLog.add` + `stats` |
+| `pygame.time` / `dt` в секундах | свои игровые часы `Game.timeMs` в мс |
+| `self`, `__init__` | `this`, `constructor` |
+| `@property` / `@staticmethod` | `get имя()` / `static имя()` |
+| `math.hypot`, `math.exp`, `math.log` | `Math.hypot`, `Math.exp`, `Math.log` |
+| `True/False/None`, f-строки | `true/false/null`, `` `${...}` `` |
+
+### Паритет с Python
+
+`tools/make_parity.py` запускает **настоящий** код `pacman_hunt` (pygame заменён
+заглушкой) на 120 случайных позициях, 100 расстояниях и 15 испорченных уровнях и
+сохраняет ответы в `tests/parity_cases.json`. `selftest.js` сверяет с ними JS:
+BFS, шаг за едой, шаг бегства, смена режима и валидация уровня совпадают на 100 %.
+Пересоздать эталон: `cd pacman_js && python3 tools/make_parity.py`.
+
+### Результат самопроверки
+
+```
+=== 1. Геометрия: класс Rect ===          5 проверок
+=== 2. Формулы: расстояние и угроза ===    9 проверок
+=== 3. Константы и эффекты ===             4 проверки
+=== 4. Уровень из JSON и валидация ===     7 проверок
+=== 5. Призрак: стены, «Бу!» и кулдаун === 4 проверки
+=== 6. Конечный автомат Пакмана ===        7 проверок
+=== 7. Паритет с Python ===                4 проверки
+=== 8. Игра целиком ===                   11 проверок
+
+Итого: 51 ✅, 0 ❌ из 51 проверок
+```
+
+![ЛР 4: игра в браузере](screenshots/js_canvas.png)
 
 ## Скриншоты
 
