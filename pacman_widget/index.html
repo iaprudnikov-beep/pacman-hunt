@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Pac-Man Hunt — веб-виджет (ЛР 5)</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="layout">
+  <!-- Левая часть: панель HUD как в Pygame + холст -->
+  <section class="screen">
+    <div class="hud">
+      <span id="hud-eaten">Съедено 0 / 0</span>
+      <div class="bar"><div id="hud-bar"></div></div>
+      <span id="hud-mode">Пакман: ищет еду</span>
+    </div>
+    <div class="stage">
+      <canvas id="game" width="880" height="600"></canvas>
+
+      <!-- Стартовый экран (как draw_menu) -->
+      <div id="menu" class="overlay">
+        <div class="title pac">PAC-MAN HUNT</div>
+        <p>Вы - призрак. Поймайте Пакмана, пока он не съел всю еду.</p>
+        <p>Управление: WASD / стрелки, пробел - «Бу!»</p>
+        <p>Пакман убегает, если вы ближе 5 клеток. Видно только то, что рядом.</p>
+        <p class="pulse">Нажмите ПРОБЕЛ, чтобы начать</p>
+        <p id="menu-level" class="accent"></p>
+      </div>
+
+      <!-- Экран результата (как draw_end) -->
+      <div id="result" class="overlay" hidden>
+        <div id="res-title" class="title win">ПАКМАН ПОЙМАН!</div>
+        <p id="res-info"></p>
+        <button data-scenario="restart" class="big">Заново</button>
+        <p class="pulse">R - заново</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Правая часть: показатели, сценарии, журнал -->
+  <aside class="panel">
+    <h2>Показатели</h2>
+    <table class="stats">
+      <tr><td>Состояние Пакмана</td><td id="st-state">Chase</td></tr>
+      <tr><td>Расстояние d</td><td id="st-dist">0</td></tr>
+      <tr><td>Угроза threat(d)</td><td id="st-threat">0</td></tr>
+      <tr><td>Пороги вход / выход</td><td id="st-thr">0</td></tr>
+      <tr><td>«Бу!»</td><td id="st-boo">готово</td></tr>
+      <tr><td>Время партии</td><td id="st-time">0 с</td></tr>
+      <tr><td>Шагов логики</td><td id="st-steps">0</td></tr>
+      <tr><td>FPS браузера</td><td id="st-fps">0</td></tr>
+      <tr><td>Туман</td><td id="st-fog">вкл</td></tr>
+      <tr><td>Пауза</td><td id="st-paused">нет</td></tr>
+    </table>
+
+    <h2>Сценарии</h2>
+    <div class="buttons">
+      <button data-scenario="boo">«Бу!»</button>
+      <button data-scenario="megaBoo">Громкое «Бу!»</button>
+      <button data-scenario="forceFlee">Пакман убегает</button>
+      <button data-scenario="calm">Успокоить</button>
+      <button data-scenario="ghostNearPacman">Призрак рядом</button>
+      <button data-scenario="scarePacman" data-args="[3000]">Испугать на 3 с</button>
+      <button data-scenario="toggleFog">Туман вкл/выкл</button>
+      <button data-scenario="setVision" data-args="[10]">Видимость 10</button>
+      <button data-scenario="setVision" data-args="[6]">Видимость 6</button>
+      <button data-scenario="slowMotion" data-args="[0.25]">Замедление</button>
+      <button data-scenario="slowMotion" data-args="[1]">Обычная скорость</button>
+      <button data-scenario="lastFood">Одна еда</button>
+      <button data-scenario="demo">Демо</button>
+      <button data-scenario="pause">Пауза</button>
+      <button data-scenario="restart">Заново</button>
+    </div>
+    <p class="hint">Консоль: <code>PacmanHunt.scenarios.list()</code></p>
+
+    <h2>Журнал</h2>
+    <pre id="log"></pre>
+    <p class="hint">Стрелки / WASD — призрак · Пробел — «Бу!» · F — туман · P — пауза · R — заново</p>
+  </aside>
+</main>
+<script type="module" src="js/widget.js"></script>
+</body>
+</html>

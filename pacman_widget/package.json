@@ -1,0 +1,14 @@
+{
+  "name": "pacman_widget",
+  "version": "1.0.0",
+  "description": "ЛР 5: веб-виджет Pac-Man Hunt на Canvas поверх ядра из ЛР 4 (без зависимостей)",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node selftest.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

@@ -97,6 +97,11 @@ pacman-hunt/
     ├── selftest.js         # самопроверка ядра в Node.js
     ├── server.js, index.html  # запуск в браузере (canvas)
     └── js/                 # классы ядра: один класс — один файл
+└── pacman_widget/          # ЛР 5: веб-виджет на Canvas (подробно — pacman_widget/README.md)
+    ├── index.html, css/style.css
+    ├── js/                 # widget, loop, input, renderer, indicators, hud, palette, scenarios
+    ├── selftest.js, server.js, package.json
+    └── README.md
 ```
 
 ## Установка и запуск (macOS)
@@ -593,6 +598,30 @@ BFS, шаг за едой, шаг бегства, смена режима и в�
 ```
 
 ![ЛР 4: игра в браузере](screenshots/js_canvas.png)
+
+## ЛР 5: веб-виджет на Canvas (`pacman_widget/`)
+
+Игра в браузере на HTML5 Canvas поверх ядра из ЛР 4: ядро импортируется из
+`pacman_js/js/` через ES-модули, без копирования. Внешний вид повторяет Pygame-версию.
+
+```bash
+cd pacman_widget
+npm start    # http://127.0.0.1:8080/pacman_widget/
+npm test     # 31 проверка: цикл, сценарии, индикаторы
+```
+
+* цикл `requestAnimationFrame` с фиксированным шагом 16.67 мс и накопителем (`js/loop.js`);
+* ввод через объект-флаги клавиш и `preventDefault` (`js/input.js`);
+* туман: видно только 6 клеток вокруг призрака (`js/renderer.js`), F — выключить;
+* волны «Бу!» с `rgba(..., alpha)` и растущим радиусом из ядра;
+* значки «!» (FLEE), «?» (RETURN), «♪» (CHASE), «!?» (антизастревание), звёздочки при испуге;
+* реестр сценариев `js/scenarios.js`: кнопки `data-scenario` и консоль `PacmanHunt.scenarios.list()`;
+* HUD через `textContent` готовых элементов, стартовый экран, экран результата, рестарт (R).
+
+Подробно — запуск, управление, таблица сценариев, параметры цикла:
+[pacman_widget/README.md](pacman_widget/README.md).
+
+![ЛР 5: виджет с туманом](screenshots/widget_fog.png)
 
 ## Скриншоты
 
