@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ЛР 6 — админка бонусов | Pac-Man Hunt</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Pac-Man Hunt <span class="accent">// админка бонусов</span></h1>
+    <p class="sub">Лабораторная работа № 6, вариант 22. CRUD-панель для внутриигровых бонусов, хранение в LocalStorage.</p>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="create-title">
+      <h2 id="create-title">Добавить бонус</h2>
+      <form id="create-form" novalidate>
+        <div class="grid">
+          <label>
+            Название
+            <input name="name" type="text" maxlength="40" required placeholder="Например, Супервишня">
+            <span class="error" data-error="name"></span>
+          </label>
+          <label>
+            Тип
+            <select name="type" required>
+              <option value="">— выберите —</option>
+              <option value="скорость">скорость</option>
+              <option value="заморозка">заморозка</option>
+              <option value="очки">очки</option>
+              <option value="щит">щит</option>
+            </select>
+            <span class="error" data-error="type"></span>
+          </label>
+          <label>
+            Очки (0–5000)
+            <input name="points" type="number" min="0" max="5000" step="1" required placeholder="200">
+            <span class="error" data-error="points"></span>
+          </label>
+          <label>
+            Длительность, сек (0–60)
+            <input name="duration" type="number" min="0" max="60" step="any" required placeholder="8">
+            <span class="error" data-error="duration"></span>
+          </label>
+          <label>
+            Шанс появления, % (0–100)
+            <input name="spawnChance" type="number" min="0" max="100" step="any" required placeholder="25">
+            <span class="error" data-error="spawnChance"></span>
+          </label>
+        </div>
+        <button type="submit" class="btn-primary">Добавить</button>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="table-title">
+      <div class="table-head">
+        <h2 id="table-title">Список бонусов</h2>
+        <p id="counter" class="counter">Показано 0 из 0</p>
+      </div>
+
+      <div class="filters">
+        <label class="filter">
+          Очки ≤ <output id="filter-val">5000</output>
+          <input type="range" id="filter-points" min="0" max="5000" step="50" value="5000">
+        </label>
+        <label class="filter grow">
+          Поиск по названию
+          <input type="search" id="filter-name" placeholder="Начните вводить имя…" autocomplete="off">
+        </label>
+      </div>
+
+      <div class="table-wrap">
+        <table id="bonuses">
+          <thead>
+            <tr>
+              <th>Название</th>
+              <th>Тип</th>
+              <th>Очки</th>
+              <th>Сек</th>
+              <th>Шанс %</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="empty-hint" class="hint" hidden>Нет записей по текущему фильтру. Сдвиньте ползунок или очистите поиск.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    Ключ LocalStorage: <code>pacman_bonuses</code>.
+    После каждой операции массив сразу сохраняется.
+    Проверка: DevTools → Application → LocalStorage, затем обновите страницу.
+  </footer>
+
+  <script type="module" src="js/crud.js"></script>
+</body>
+</html>

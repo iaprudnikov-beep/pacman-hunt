@@ -1,7 +1,7 @@
 # Pac-Man Hunt — «Пакман: Охота в лабиринте»
 
-Лабораторные работы № 1–3, **вариант 22**. Игра на Python + Pygame
-и Telegram-бот аналитики к ней на aiogram.
+Лабораторные работы № 1–6, **вариант 22**. Игра на Python + Pygame,
+Telegram-бот аналитики на aiogram и веб-части на JavaScript.
 
 - **ЛР 1** — сама игра: лабиринт, классы, коллизии, меню, HUD.
 - **ЛР 2** — работа с файлами: уровень загружается из JSON с проверкой,
@@ -10,6 +10,10 @@
 - **ЛР 3** — Telegram-бот «Аналитик Pac-Man Hunt» (папка `py_bot/`):
   таблица лидеров, личная статистика, ачивки и разбор лога по файлам
   игры (см. раздел [«ЛР 3: Telegram-бот»](#лр-3-telegram-бот)).
+- **ЛР 4** — ядро игры на JavaScript (папка `pacman_js/`).
+- **ЛР 5** — веб-виджет на Canvas (папка `pacman_widget/`).
+- **ЛР 6** — админка бонусов: CRUD в браузере и LocalStorage
+  (папка `pacman_crud/`, см. раздел [«ЛР 6: админка бонусов»](#лр-6-админка-бонусов-pacman_crud)).
 
 ## Описание варианта
 
@@ -100,6 +104,11 @@ pacman-hunt/
 └── pacman_widget/          # ЛР 5: веб-виджет на Canvas (подробно — pacman_widget/README.md)
     ├── index.html, css/style.css
     ├── js/                 # widget, loop, input, renderer, indicators, hud, palette, scenarios
+    ├── selftest.js, server.js, package.json
+    └── README.md
+└── pacman_crud/            # ЛР 6: админка бонусов (подробно — pacman_crud/README.md)
+    ├── index.html, css/style.css
+    ├── js/                 # validation.js (проверки), crud.js (страница)
     ├── selftest.js, server.js, package.json
     └── README.md
 ```
@@ -622,6 +631,23 @@ npm test     # 31 проверка: цикл, сценарии, индикато
 [pacman_widget/README.md](pacman_widget/README.md).
 
 ![ЛР 5: виджет с туманом](screenshots/widget_fog.png)
+
+## ЛР 6: админка бонусов (`pacman_crud/`)
+
+Панель администратора в браузере для внутриигровых бонусов (вариант 22).
+Полный CRUD: форма добавления с валидацией, таблица с фильтром «очки ≤ N»
+и поиском по названию, инлайн-редактирование строки, удаление с `confirm()`.
+Данные сразу пишутся в LocalStorage под ключом `pacman_bonuses`.
+Защита от XSS — `escapeHtml` перед вставкой строк в HTML.
+
+```bash
+cd pacman_crud
+npm start    # http://127.0.0.1:8083/
+npm test     # проверка валидации и escapeHtml
+```
+
+Подробно — поля сущности, запуск и шаги проверки:
+[pacman_crud/README.md](pacman_crud/README.md).
 
 ## Скриншоты
 

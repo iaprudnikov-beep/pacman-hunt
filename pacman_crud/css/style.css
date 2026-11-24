@@ -1,0 +1,178 @@
+/* css/style.css — тёмная тема, моноширинный шрифт, как просят в методичке */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #05030f;
+  color: #f5f5ff;
+  font-family: "Consolas", "Menlo", "Courier New", ui-monospace, monospace;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.top, main, .foot {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 20px;
+}
+
+.top h1 {
+  margin: 12px 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.accent { color: rgb(0, 230, 255); }
+
+.sub, .foot, .hint, .counter {
+  color: rgb(170, 170, 210);
+  font-size: 12px;
+}
+
+.sub { margin: 0; }
+
+.card {
+  background: rgb(12, 10, 34);
+  border: 1px solid rgb(60, 140, 255);
+  border-radius: 8px;
+  padding: 16px 18px 18px;
+  margin-bottom: 16px;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: rgb(0, 230, 255);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 10px 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 800px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+
+label, .filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: rgb(200, 200, 230);
+  font-size: 12px;
+}
+
+input, select, button {
+  font: inherit;
+  color: #f5f5ff;
+  background: #05030f;
+  border: 1px solid rgb(60, 140, 255);
+  border-radius: 6px;
+  padding: 7px 8px;
+}
+
+input:focus, select:focus {
+  outline: 2px solid rgb(0, 230, 255);
+  outline-offset: 1px;
+}
+
+input[type="range"] {
+  padding: 0;
+  accent-color: rgb(0, 230, 255);
+  cursor: pointer;
+}
+
+span.error {
+  min-height: 1.1em;
+  color: rgb(255, 80, 110);
+  font-size: 11px;
+}
+
+.btn-primary {
+  background: rgb(14, 18, 60);
+  cursor: pointer;
+  padding: 8px 18px;
+}
+
+.btn-primary:hover { background: rgb(30, 40, 110); }
+
+.table-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+  margin: 0 0 12px;
+  flex-wrap: wrap;
+}
+
+.filter { min-width: 220px; }
+.filter.grow { flex: 1; }
+
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px 8px;
+  border-bottom: 1px solid rgb(30, 28, 70);
+  vertical-align: top;
+}
+
+th {
+  color: rgb(0, 230, 255);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+th:nth-child(3), th:nth-child(4), th:nth-child(5) { text-align: right; }
+
+td.actions { white-space: nowrap; width: 1%; }
+
+.actions button {
+  padding: 4px 8px;
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+.btn-edit:hover { border-color: rgb(0, 230, 255); color: rgb(0, 230, 255); }
+.btn-save { border-color: rgb(80, 220, 140); color: rgb(80, 220, 140); }
+.btn-save:hover { background: rgb(20, 50, 40); }
+.btn-delete, .btn-cancel { border-color: rgb(255, 80, 110); color: rgb(255, 80, 110); }
+.btn-delete:hover, .btn-cancel:hover { background: rgb(50, 16, 28); }
+
+tr.editing { background: rgba(0, 230, 255, 0.06); }
+tr.editing input, tr.editing select { width: 100%; }
+
+.tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+}
+
+.tag-скорость { color: rgb(0, 230, 255); }
+.tag-заморозка { color: rgb(140, 180, 255); }
+.tag-очки { color: rgb(255, 224, 40); }
+.tag-щит { color: rgb(80, 220, 140); }
+
+.hint { margin: 10px 0 0; }
+.foot { padding-bottom: 28px; }
+.foot code { color: rgb(255, 224, 40); }
